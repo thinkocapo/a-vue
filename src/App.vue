@@ -1,0 +1,180 @@
+<template>
+  <div id="app">
+      <div id="iconsDiv">
+        <img id="sentryIcon" alt="Sentry logo" src="./assets/sentry-logo.png" />
+        <p class="plus">+</p>
+        <img class="icon" alt="Vue logo" src="./assets/logo.png" />
+      </div>
+
+      <p id="greeting">{{greetingTxt}}</p>
+      <div id="email-div">
+        <input id="emailInput" v-model="userEmail" placeholder="Enter email..." type="email" />
+        <button class="event-button" v-on:click="submitEmail">Submit</button>
+      </div>
+      <div id="event-list">
+        <EventButton title="TypeError" :onClick="notAFunctionError" />
+        <EventButton title="URIError" :onClick="uriError" />
+        <EventButton title="SyntaxError" :onClick="syntaxError" />
+        <EventButton title="RangeError" :onClick="rangeError" />
+        <EventButton title="REST Call Error" :onClick="restError" />
+      </div>
+    </div>
+</template>
+
+<script>
+import EventButton from "./components/EventButton.vue";
+import Vue from "vue";
+import * as Sentry from "@sentry/vue";
+import { Integrations } from "@sentry/tracing";
+
+const HELLO = "Hello, Simon!";
+
+
+
+Sentry.init({
+  Vue: Vue,
+  dsn: "https://491035397848481eb7291c583b19b930@o87286.ingest.sentry.io/5988614",
+  release: process.env.VUE_APP_RELEASE,
+  environment: "prod",
+  integrations: [new Integrations.BrowserTracing()],
+  tracesSampleRate: 1.0,
+});
+
+export default {
+  name: "app",
+  components: {
+    EventButton
+  },
+  data: function() {
+    return { greetingTxt: HELLO, userEmail: "" };
+  },
+  methods: {
+    submitEmail: function() {
+      /*Sentry.configureScope(scope => {
+        scope.setUser({ email: this.userEmail });
+      });*/
+
+      var newGreeting = HELLO + " " + this.userEmail;
+      this.$set(this.$data, "greetingTxt", newGreeting);
+    },
+
+    notAFunctionError: function() {
+      console.log("notAFunctionError...");
+      var someArray = [{ func: function() {} }];
+      someArray[1].func();
+    },
+    uriError: function() {
+      console.log("uriError...");
+      decodeURIComponent("%");
+    },
+
+    syntaxError: function() {
+      console.log("syntaxError...");
+      eval("foo bar");
+    },
+
+    rangeError: function() {
+      console.log("rangeError...");
+      throw new RangeError("Parameter must be between 1 and 100");
+    },
+
+    restError: function() {
+      const transaction = Sentry.startTransaction({ name: "checkout" });
+      // Do this or the trace won't include the backend transaction
+      //Sentry.configureScope(scope => scope.setSpan(transaction));
+
+
+      Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
+
+
+      console.log("restError...");
+      var myHeaders = new Headers();
+      myHeaders.append("Content-Type", "text/plain");
+
+      var raw = "{\"cart\":{\"items\":[{\"id\":4,\"title\":\"Botana Voice\",\"description\":\"Lets plants speak for themselves.\",\"descriptionfull\":\"Now we don't want him to get lonely, so we'll give him a little friend. Let your imagination just wonder around when you're doing these things. Let your imagination be your guide. Nature is so fantastic, enjoy it. Let it make you happy.\",\"price\":175,\"img\":\"https://storage.googleapis.com/application-monitoring/plant-to-text.jpg\",\"imgcropped\":\"https://storage.googleapis.com/application-monitoring/plant-to-text-cropped.jpg\",\"pg_sleep\":\"\",\"reviews\":[{\"id\":4,\"productid\":4,\"rating\":4,\"customerid\":null,\"description\":null,\"created\":\"2021-06-04 00:12:33.553939\",\"pg_sleep\":\"\"},{\"id\":5,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-06-04 00:12:45.558259\",\"pg_sleep\":\"\"},{\"id\":6,\"productid\":4,\"rating\":2,\"customerid\":null,\"description\":null,\"created\":\"2021-06-04 00:12:50.510322\",\"pg_sleep\":\"\"},{\"id\":13,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:12:43.312186\",\"pg_sleep\":\"\"},{\"id\":14,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:12:54.719873\",\"pg_sleep\":\"\"},{\"id\":15,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:12:57.760686\",\"pg_sleep\":\"\"},{\"id\":16,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:13:00.140407\",\"pg_sleep\":\"\"},{\"id\":17,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:13:00.971730\",\"pg_sleep\":\"\"},{\"id\":18,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:13:01.665798\",\"pg_sleep\":\"\"},{\"id\":19,\"productid\":4,\"rating\":3,\"customerid\":null,\"description\":null,\"created\":\"2021-07-01 00:13:02.278934\",\"pg_sleep\":\"\"}]}],\"quantities\":{\"4\":2},\"total\":350},\"form\":{\"loading\":false}}";
+
+      var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow'
+      };
+
+      fetch("http://localhost:8080/checkout", requestOptions)
+        .then(function(response) {
+          console.log("Sentry.captureException");
+          if (!response.ok) {
+            const err = new Error(response.status + " - " + (response.statusText || "Internal Server Error"));
+            Sentry.captureException(err);
+            console.error(err);
+          }
+          console.log("transaction.finish");
+          transaction.finish(); //This doesn't end the transaction
+        });
+
+      console.log("zhong");
+      
+    }
+  }
+};
+
+</script>
+
+<style>
+
+#app {
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  height: 900px;
+
+  background-image: url("./assets/sentry-pattern.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#email-div {
+  width: 600px;
+  display: inline-flex;
+}
+
+#emailInput {
+  height: 30px;
+  width: 90%;
+}
+
+#event-list {
+  height: 400px;
+  padding: 3rem;
+}
+
+#greeting {
+  margin-bottom: 0.8rem;
+  margin-top: -2rem;
+  font-size: 2rem;
+}
+
+.icon {
+  height: 6rem;
+  width: 6rem;
+  padding-top: 1.6rem;
+  padding-left: 2rem;
+}
+
+#sentryIcon {
+  height: 9rem;
+  width: 9rem;
+}
+
+#iconsDiv {
+  display: inline-flex;
+  padding-bottom: 2rem;
+}
+
+.plus {
+  font-size: 2.6rem;
+}
+</style>
