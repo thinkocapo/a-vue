@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "tbd_predeploy": "npm run build && make setup_release",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && make setup_release",
+    "old_predeploy": "npm run build",
     "deploy": "./node_modules/.bin/serve -s dist",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",

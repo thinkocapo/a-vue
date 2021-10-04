@@ -4,10 +4,10 @@
 
 SENTRY_ORG=testorg-az
 SENTRY_PROJECT=simon-vue
-#TODO: Set up github repo, then: VERSION=`sentry-cli releases propose-version`
-VERSION=010
+VERSION=`sentry-cli releases propose-version`
 
-setup_release: create_release associate_commits upload_sourcemaps
+#setup_release: create_release associate_commits upload_sourcemaps
+setup_release: create_release upload_sourcemaps
 
 create_release:
 	sentry-cli releases -o $(SENTRY_ORG) new -p $(SENTRY_PROJECT) $(VERSION)

@@ -1,0 +1,42 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+*.pyc
+# dependencies
+/node_modules
+react/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+react/build
+
+# misc
+.vscode
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+**/.env
+env
+**/env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+notes.txt
+flask/.virtualenv
+**/.virtualenv
+flask/envtest
+node/node_modules
+node/package-lock.json
+ruby/Gemfile.lock
+flask/test.py
+react/app.yaml
+flask/app.yaml
+
+spring-boot/src/main/resources/application.properties
