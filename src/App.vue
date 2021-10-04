@@ -82,8 +82,8 @@ export default {
     restError: function() {
       const transaction = Sentry.startTransaction({ name: "checkout" });
       // Do this or the trace won't include the backend transaction
-      // Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
-      Sentry.configureScope(scope => scope.setSpan(transaction));
+      Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
+      //Sentry.configureScope(scope => scope.setSpan(transaction));
 
       console.log("restError...");
       var myHeaders = new Headers();
@@ -114,7 +114,7 @@ export default {
     },
 
     restErrorLocal: function() {
-      const transaction = Sentry.startTransaction({ name: "checkout" });
+      const transaction = Sentry.startTransaction({ name: "checkoutLocal" });
       // Do this or the trace won't include the backend transaction
       Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
 
