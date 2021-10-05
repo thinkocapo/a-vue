@@ -17,7 +17,7 @@
         <EventButton title="SyntaxError" :onClick="syntaxError" />
         <EventButton title="RangeError" :onClick="rangeError" />
         <EventButton title="HTTP Request to Backend" :onClick="restError" />
-        <EventButton title="HTTP Request to Backend (local)" :onClick="restErrorLocal" />
+        <EventButton title="Another HTTP Request to Backend" :onClick="getProducts" />
       </div>
     </div>
 </template>
@@ -28,7 +28,7 @@ import Vue from "vue";
 import * as Sentry from "@sentry/vue";
 import { Integrations } from "@sentry/tracing";
 
-const HELLO = "Hello, Simon!";
+const HELLO = "Hello, World!";
 
 //Required for distributed tracing outside of localhost
 const tracingOrigins = ['localhost', 'empowerplant.io', 'run.app', 'appspot.com', /^\//];
@@ -148,8 +148,44 @@ export default {
         });
 
       console.log("...restErrorLocal");
+    },
+
+    getProducts: function() {
+      const transaction = Sentry.startTransaction({ name: "products" });
+      // Do this or the trace won't include the backend transaction
+      Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
+
+      console.log("getProducts...");
+      var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+      };
+
+      fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/products", requestOptions)
+        .then(function(response) {
+          console.log(response.text());
+          console.log("transaction.finish");
+          transaction.finish();
+        })
+        .catch(error => console.log('error', error));
+
+      console.log("...getProducts");
     }
+
+  },
+
+  /*beforeMount() {
+    console.log("beforeMount getProducts()");
+    this.getProducts();
+  },*/
+
+  mounted() {
+    setTimeout(() => {
+
+      console.log("hi");
+    }, 5000);
   }
+
 };
 
 </script>
