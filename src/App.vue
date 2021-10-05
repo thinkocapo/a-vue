@@ -30,6 +30,8 @@ import { Integrations } from "@sentry/tracing";
 
 const HELLO = "Hello, Simon!";
 
+//Required for distributed tracing outside of localhost
+const tracingOrigins = ['localhost', 'empowerplant.io', 'run.app', 'appspot.com', /^\//];
 
 
 Sentry.init({
@@ -37,7 +39,9 @@ Sentry.init({
   dsn: "https://491035397848481eb7291c583b19b930@o87286.ingest.sentry.io/5988614",
   release: process.env.VUE_APP_RELEASE,
   environment: "prod",
-  integrations: [new Integrations.BrowserTracing()],
+  integrations: [new Integrations.BrowserTracing({
+    tracingOrigins: tracingOrigins,
+  })],
   tracesSampleRate: 1.0,
 });
 
@@ -100,6 +104,7 @@ export default {
 
       fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/checkout", requestOptions)
         .then(function(response) {
+          //add delay here
           if (!response.ok) {
             const err = new Error(response.status + " - " + (response.statusText || "Internal Server Error"));
             Sentry.captureException(err);
