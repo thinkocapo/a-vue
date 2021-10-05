@@ -104,9 +104,8 @@ export default {
 
       fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/checkout", requestOptions)
         .then(function(response) {
-          //add delay here
           if (!response.ok) {
-            const err = new Error(response.status + " - " + (response.statusText || "Internal Server Error"));
+            const err = new Error(response.status + " -- " + (response.statusText || "Internal Server Error"));
             Sentry.captureException(err);
             console.error(err);
           }
