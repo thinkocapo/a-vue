@@ -17,7 +17,9 @@
         <EventButton title="SyntaxError" :onClick="syntaxError" />
         <EventButton title="RangeError" :onClick="rangeError" />
         <EventButton title="HTTP Request to Backend" :onClick="restError" />
-        <EventButton title="Another HTTP Request to Backend" :onClick="getProducts" />
+      </div>
+      <div id="json">
+        Pending HTTP Request on page load...
       </div>
     </div>
 </template>
@@ -28,7 +30,7 @@ import Vue from "vue";
 import * as Sentry from "@sentry/vue";
 import { Integrations } from "@sentry/tracing";
 
-const HELLO = "Hello, World!";
+const HELLO = "Hello ";
 
 //Required for distributed tracing outside of localhost
 const tracingOrigins = ['localhost', 'empowerplant.io', 'run.app', 'appspot.com', /^\//];
@@ -54,12 +56,16 @@ export default {
     return { greetingTxt: HELLO, userEmail: "" };
   },
   methods: {
-    submitEmail: function() {
-      /*Sentry.configureScope(scope => {
-        scope.setUser({ email: this.userEmail });
-      });*/
+    onClick: function() {
+      console.log("global");
+    },
 
-      var newGreeting = HELLO + " " + this.userEmail + " " + process.env.VUE_APP_RELEASE;
+    submitEmail: function() {
+      Sentry.configureScope(scope => {
+        scope.setUser({ email: this.userEmail });
+      });
+
+      var newGreeting = HELLO + " " + this.userEmail;
       this.$set(this.$data, "greetingTxt", newGreeting);
     },
 
@@ -118,9 +124,14 @@ export default {
     },
 
     getProducts: function() {
-      const transaction = Sentry.startTransaction({ name: "products" });
       // Do this or the trace won't include the backend transaction
-      Sentry.getCurrentHub().configureScope(scope => scope.setSpan(transaction));
+      const transaction = Sentry.getCurrentHub().getScope().getTransaction();
+      let span = {};
+      if (transaction) {
+        span = transaction.startChild({
+          op: "http_request",
+          description: "load_products",
+      })}
 
       console.log("getProducts...");
       var requestOptions = {
@@ -129,16 +140,18 @@ export default {
       };
 
       fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/products", requestOptions)
-        .then(function(response) {
-          console.log(response.text());
-          console.log("transaction.finish");
-          transaction.finish();
-        })
-        .catch(error => console.log('error', error));
+        .then(response => response.text())
+        .then(result => document.getElementById("json").textContent = result)
+        .catch(error => {
+          console.log('error', error);
+        });
 
+
+      span.finish();
+
+     
       console.log("...getProducts");
-    }
-
+    },
   },
 
   /*beforeMount() {
@@ -148,12 +161,12 @@ export default {
 
   mounted() {
     setTimeout(() => {
-
-      console.log("hi");
-    }, 5000);
+      this.getProducts();
+      //do getProducts call and see slowdown on home page load; print to bottom of buttons to show fetch; don't show /products, just show /
+    }, 1);
   }
 
-};
+}
 
 </script>
 
@@ -166,6 +179,7 @@ export default {
   text-align: center;
   color: #2c3e50;
   height: 900px;
+  font-weight: bold;
 
   background-image: url("./assets/sentry-pattern.png");
   background-position: center;
