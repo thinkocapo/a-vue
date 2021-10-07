@@ -7,10 +7,10 @@
       </div>
 
       <p id="greeting">{{greetingTxt}}</p>
-      <div id="email-div">
+      <!-- <div id="email-div">
         <input id="emailInput" v-model="userEmail" placeholder="Enter email..." type="email" />
         <button class="event-button" v-on:click="submitEmail">Submit</button>
-      </div>
+      </div> -->
       <div id="event-list">
         <EventButton title="TypeError" :onClick="notAFunctionError" />
         <EventButton title="URIError" :onClick="uriError" />
@@ -21,6 +21,14 @@
       <div id="json">
         Pending HTTP Request on page load...
       </div>
+      <div id="loadImage-wrap">
+        <img id="loadImage" />
+        <img id="loadImage2" />
+        <img id="loadImage3" />
+        <img id="loadImage4" />
+        <img id="loadImage5" />
+      </div>
+
     </div>
 </template>
 
@@ -34,13 +42,14 @@ const HELLO = "Hello ";
 
 //Required for distributed tracing outside of localhost
 const tracingOrigins = ['localhost', 'empowerplant.io', 'run.app', 'appspot.com', /^\//];
+const env = "dev";
 
 
 Sentry.init({
   Vue: Vue,
   dsn: "https://491035397848481eb7291c583b19b930@o87286.ingest.sentry.io/5988614",
   release: process.env.VUE_APP_RELEASE,
-  environment: "prod",
+  environment: env,
   integrations: [new Integrations.BrowserTracing({
     tracingOrigins: tracingOrigins,
   })],
@@ -56,16 +65,47 @@ export default {
     return { greetingTxt: HELLO, userEmail: "" };
   },
   methods: {
-    onClick: function() {
-      console.log("global");
+    loadGraphics: function() {
+      if (Math.floor(Math.random() * 10)%2 == 1) {
+        document.getElementById("loadImage").src = "https://vastphotos.com/files/uploads/photos/10439/high-resolution-national-park-photo-print-l.jpg";
+        document.getElementById("loadImage2").src = "https://vastphotos.com/files/uploads/photos/10312/very-high-resolution-yosemite-valley-sunset-photo-vast-xl.jpg";
+        document.getElementById("loadImage3").src = "https://cdn11.bigcommerce.com/s-nq6l4syi/images/stencil/1280x1280/products/25248/266478/83545-1024__88984.1612782086.jpg";
+        document.getElementById("loadImage4").src = "https://i.etsystatic.com/9557911/r/il/d31e86/1350658498/il_1588xN.1350658498_b5dc.jpg";
+        document.getElementById("loadImage5").src = "https://vastphotos.com/files/uploads/photos/10655/yosemite-el-capitan-vast-xl.jpg";
+      }
+    },
+
+    setEnvironment: function() {
+      if (Math.floor(Math.random() * 10)%3 == 1) {
+        this.env = "prod";
+      } else if (Math.floor(Math.random() * 10)%3 == 0) {
+        this.env = "dev";
+      } else {
+        this.env = "test";
+      }
+      console.log("Environment: " + this.env);
     },
 
     submitEmail: function() {
       Sentry.configureScope(scope => {
         scope.setUser({ email: this.userEmail });
       });
-
       var newGreeting = HELLO + " " + this.userEmail;
+      this.$set(this.$data, "greetingTxt", newGreeting);
+    },
+
+    setRandomUser: function() {
+      var chars = 'abcdefghijklmnopqrstuvwxyz1234567890';
+      var string = '';
+      for(var ii=0; ii<15; ii++){
+        string += chars[Math.floor(Math.random() * chars.length)];
+      }
+      let randomEmail = string + "@sentry.io";
+      Sentry.configureScope(scope => {
+        scope.setUser({ email: randomEmail });
+      });
+
+      var newGreeting = HELLO + " " + randomEmail;
       this.$set(this.$data, "greetingTxt", newGreeting);
     },
 
@@ -160,6 +200,10 @@ export default {
   },*/
 
   mounted() {
+    this.setEnvironment();
+    this.setRandomUser();
+    //this.loadGraphics();
+    
     setTimeout(() => {
       this.getProducts();
       //do getProducts call and see slowdown on home page load; print to bottom of buttons to show fetch; don't show /products, just show /
