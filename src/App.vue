@@ -18,6 +18,11 @@
         <EventButton title="RangeError" :onClick="rangeError" />
         <EventButton title="HTTP Request to Backend" :onClick="restError" />
       </div>
+      <div id="product-list">
+        <div>
+          <ProductSummary :products="products" />
+        </div>
+      </div>
       <div id="json">
         Pending HTTP Request on page load...
       </div>
@@ -34,6 +39,7 @@
 
 <script>
 import EventButton from "./components/EventButton.vue";
+import ProductSummary from "./components/ProductSummary.vue";
 import Vue from "vue";
 import * as Sentry from "@sentry/vue";
 import { Integrations } from "@sentry/tracing";
@@ -59,11 +65,34 @@ Sentry.init({
 export default {
   name: "app",
   components: {
-    EventButton
+    EventButton,
+    ProductSummary
   },
   data: function() {
-    return { greetingTxt: HELLO, userEmail: "" };
+    return { 
+      greetingTxt: HELLO, 
+      userEmail: "",
+      products: [] 
+    };
   },
+  async created() {
+    try {
+      var requestOptions = {
+        method: 'GET',
+        redirect: 'follow'
+      };
+
+      fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/products", requestOptions)
+        .then(response => response.text())
+        .then(result => this.products = JSON.parse(result))
+        .catch(error => {
+          console.log('error', error);
+        });
+    } catch (ex) {
+      console.log(ex);
+    }
+  },
+
   methods: {
     loadGraphics: function() {
       if (Math.floor(Math.random() * 10)%2 == 1) {
@@ -192,6 +221,10 @@ export default {
      
       console.log("...getProducts");
     },
+
+    renderProducts: function() {
+      console.log("Render Products");
+    }
   },
 
   /*beforeMount() {
