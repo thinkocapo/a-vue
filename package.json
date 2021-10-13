@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "predeploy": "npm run build && make setup_release",
-    "no_upload_predeploy": "npm run build",
+    "dev_predeploy": "npm run build",
     "deploy": "./node_modules/.bin/serve -s dist",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",

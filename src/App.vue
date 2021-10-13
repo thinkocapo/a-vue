@@ -7,10 +7,10 @@
       </div>
 
       <p id="greeting">{{greetingTxt}}</p>
-      <!-- <div id="email-div">
+      <div id="email-div">
         <input id="emailInput" v-model="userEmail" placeholder="Enter email..." type="email" />
         <button class="event-button" v-on:click="submitEmail">Submit</button>
-      </div> -->
+      </div>
       <div id="event-list">
         <EventButton title="TypeError" :onClick="notAFunctionError" />
         <EventButton title="URIError" :onClick="uriError" />
@@ -53,7 +53,7 @@ const env = "dev";
 
 Sentry.init({
   Vue: Vue,
-  dsn: "https://491035397848481eb7291c583b19b930@o87286.ingest.sentry.io/5988614",
+  dsn: process.env.VUE_APP_DSN,
   release: process.env.VUE_APP_RELEASE,
   environment: env,
   integrations: [new Integrations.BrowserTracing({
@@ -76,6 +76,16 @@ export default {
     };
   },
   async created() {
+    // Do this or the trace won't include the backend transaction
+    const transaction = Sentry.getCurrentHub().getScope().getTransaction();
+    let span = {};
+    if (transaction) {
+      span = transaction.startChild({
+        op: "http_request",
+        description: "load_products",
+    })}
+    console.log("getProducts...");
+
     try {
       var requestOptions = {
         method: 'GET',
@@ -91,23 +101,16 @@ export default {
     } catch (ex) {
       console.log(ex);
     }
+
+    span.finish();
+
   },
 
   methods: {
-    loadGraphics: function() {
-      if (Math.floor(Math.random() * 10)%2 == 1) {
-        document.getElementById("loadImage").src = "https://vastphotos.com/files/uploads/photos/10439/high-resolution-national-park-photo-print-l.jpg";
-        document.getElementById("loadImage2").src = "https://vastphotos.com/files/uploads/photos/10312/very-high-resolution-yosemite-valley-sunset-photo-vast-xl.jpg";
-        document.getElementById("loadImage3").src = "https://cdn11.bigcommerce.com/s-nq6l4syi/images/stencil/1280x1280/products/25248/266478/83545-1024__88984.1612782086.jpg";
-        document.getElementById("loadImage4").src = "https://i.etsystatic.com/9557911/r/il/d31e86/1350658498/il_1588xN.1350658498_b5dc.jpg";
-        document.getElementById("loadImage5").src = "https://vastphotos.com/files/uploads/photos/10655/yosemite-el-capitan-vast-xl.jpg";
-      }
-    },
-
     setEnvironment: function() {
-      if (Math.floor(Math.random() * 10)%3 == 1) {
+      if (Math.floor(Math.random() * 100)%3 == 1) {
         this.env = "prod";
-      } else if (Math.floor(Math.random() * 10)%3 == 0) {
+      } else if (Math.floor(Math.random() * 100)%3 == 0) {
         this.env = "dev";
       } else {
         this.env = "test";
@@ -139,22 +142,22 @@ export default {
     },
 
     notAFunctionError: function() {
-      console.log("notAFunctionError...");
+      console.log("notAFunctionError");
       var someArray = [{ func: function() {} }];
       someArray[1].func();
     },
     uriError: function() {
-      console.log("uriError...");
+      console.log("uriError");
       decodeURIComponent("%");
     },
 
     syntaxError: function() {
-      console.log("syntaxError...");
+      console.log("syntaxError");
       eval("foo bar");
     },
 
     rangeError: function() {
-      console.log("rangeError...");
+      console.log("rangeError");
       throw new RangeError("Parameter must be between 1 and 100");
     },
 
@@ -186,44 +189,7 @@ export default {
           }
           console.log("transaction.finish");
           transaction.finish();
-        });
-
-      console.log("...restError");
-      
-    },
-
-    getProducts: function() {
-      // Do this or the trace won't include the backend transaction
-      const transaction = Sentry.getCurrentHub().getScope().getTransaction();
-      let span = {};
-      if (transaction) {
-        span = transaction.startChild({
-          op: "http_request",
-          description: "load_products",
-      })}
-
-      console.log("getProducts...");
-      var requestOptions = {
-        method: 'GET',
-        redirect: 'follow'
-      };
-
-      fetch("https://application-monitoring-flask-dot-sales-engineering-sf.appspot.com/products", requestOptions)
-        .then(response => response.text())
-        .then(result => document.getElementById("json").textContent = result)
-        .catch(error => {
-          console.log('error', error);
-        });
-
-
-      span.finish();
-
-     
-      console.log("...getProducts");
-    },
-
-    renderProducts: function() {
-      console.log("Render Products");
+        });      
     }
   },
 
@@ -235,12 +201,6 @@ export default {
   mounted() {
     this.setEnvironment();
     this.setRandomUser();
-    //this.loadGraphics();
-    
-    setTimeout(() => {
-      this.getProducts();
-      //do getProducts call and see slowdown on home page load; print to bottom of buttons to show fetch; don't show /products, just show /
-    }, 1);
   }
 
 }

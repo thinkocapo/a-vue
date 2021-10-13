@@ -1,10 +1,12 @@
 # Must have `sentry-cli` installed globally
 # Following variable must be passed in
 #  SENTRY_AUTH_TOKEN
+# SENTRY_* properties are set in the local ./.env file
 
-SENTRY_ORG=testorg-az
-SENTRY_PROJECT=simon-vue
-VERSION=`sentry-cli releases propose-version`
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 setup_release: create_release associate_commits upload_sourcemaps
 
