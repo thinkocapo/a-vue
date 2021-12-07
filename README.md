@@ -30,6 +30,8 @@ export SENTRY_AUTH_TOKEN=<Your Auth Token>
 ```
 5. Set other variables in your ```.env``` file; use the ```.env.example``` file as a reference
 
+6. `npm install`
+
 ## Run
 1. Run in terminal with
 ```
